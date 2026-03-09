@@ -14,6 +14,7 @@ import { StatsView } from '@/components/StatsView';
 import { AddEntryModal } from '@/components/AddEntryModal';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { EntryCard } from '@/components/EntryCard';
+import { InstallPrompt } from '@/components/InstallPrompt';
 
 const Index = () => {
   const { entries, addEntry, deleteEntry, markPrayerAnswered } = useEntries();
@@ -285,6 +286,8 @@ const Index = () => {
         presetEmojis={PRESET_EMOJIS}
         presetColors={PRESET_COLORS}
       />
+
+      <InstallPrompt />
     </div>
   );
 };
