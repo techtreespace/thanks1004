@@ -27,3 +27,5 @@ const App = () => (
     </I18nProvider>
   </QueryClientProvider>
 );
+
+export default App;
