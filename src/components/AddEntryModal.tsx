@@ -129,12 +129,7 @@ export function AddEntryModal({
                               setSelectedCategory(cat.id);
                               setShowCategoryPicker(false);
                             }}
-                            className={`transition-all ${selectedCategory === cat.id ? 'ring-2 ring-offset-1' : ''}`}
-                            style={
-                              selectedCategory === cat.id
-                                ? { ringColor: `hsl(${cat.color})`, borderRadius: '999px' }
-                                : {}
-                            }
+                            className={`transition-all rounded-full ${selectedCategory === cat.id ? 'ring-2 ring-offset-1 ring-primary' : ''}`}
                           >
                             <CategoryBadge category={cat} size="md" />
                           </button>
