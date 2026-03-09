@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ViewMode, DEFAULT_CATEGORY_IDS } from '@/types';
 import { useEntries, AddEntryData } from '@/hooks/useEntries';
 import { useCategories } from '@/hooks/useCategories';
