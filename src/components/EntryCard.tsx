@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
-import { Trash2, CheckCircle2, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { Trash2, CheckCircle2, Clock, Heart } from 'lucide-react';
 import { Entry, Category, DEFAULT_CATEGORY_IDS } from '@/types';
 import { CategoryBadge } from './CategoryBadge';
 
@@ -21,103 +22,177 @@ export function EntryCard({
   showDate = false,
 }: EntryCardProps) {
   const isPrayer = category?.id === DEFAULT_CATEGORY_IDS.PRAYER;
+  const [swiped, setSwiped] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const timeStr = new Date(entry.createdAt).toLocaleTimeString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
   });
 
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.x < -80) {
+      setSwiped(true);
+    } else {
+      setSwiped(false);
+    }
+  };
+
+  const handleDelete = () => {
+    if (confirmDelete) {
+      onDelete(entry.id);
+    } else {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 3000);
+    }
+  };
+
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: isCarried ? 0.55 : 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className={`relative rounded-xl shadow-card overflow-hidden group ${isCarried ? 'entry-carried' : ''}`}
-      style={{ background: 'var(--gradient-card)' }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -200, transition: { duration: 0.25 } }}
+      transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+      className="relative overflow-hidden rounded-2xl mb-3"
     >
-      {/* Color accent bar */}
-      {category && (
-        <div
-          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
-          style={{ backgroundColor: `hsl(${category.color})` }}
-        />
-      )}
+      {/* Delete action behind card */}
+      <div
+        className="absolute inset-0 flex items-center justify-end px-5 rounded-2xl"
+        style={{ backgroundColor: 'hsl(var(--destructive) / 0.9)' }}
+      >
+        <button onClick={handleDelete} className="flex items-center gap-1.5 text-sm font-body font-medium" style={{ color: 'hsl(0 0% 100%)' }}>
+          <Trash2 size={16} />
+          {confirmDelete ? '확인' : '삭제'}
+        </button>
+      </div>
 
-      <div className="pl-4 pr-4 pt-4 pb-3">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2 mb-2.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            {category && <CategoryBadge category={category} size="sm" />}
-            {isPrayer && entry.isAnswered && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-body font-medium"
-                style={{ backgroundColor: 'hsl(142 55% 45% / 0.12)', color: 'hsl(142 55% 38%)', border: '1px solid hsl(142 55% 45% / 0.25)' }}>
-                <CheckCircle2 size={10} />
-                응답됨
-              </span>
-            )}
-            {isPrayer && !entry.isAnswered && isCarried && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-body"
-                style={{ backgroundColor: 'hsl(40 30% 90%)', color: 'hsl(35 25% 48%)' }}>
-                <Clock size={10} />
-                이어짐
-              </span>
-            )}
-          </div>
-          <button
-            onClick={() => onDelete(entry.id)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-            aria-label="삭제"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
-
-        {/* Photo */}
-        {entry.imageUrl && (
-          <div className="mb-3 rounded-lg overflow-hidden">
-            <img src={entry.imageUrl} alt="기록 사진" className="w-full max-h-52 object-cover" />
-          </div>
+      {/* Card content (swipeable) */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: -100, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+        animate={{ x: swiped ? -90 : 0 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+        onTap={() => swiped && setSwiped(false)}
+        className={`relative rounded-2xl shadow-card overflow-hidden ${isCarried ? 'opacity-50' : ''}`}
+        style={{ background: 'var(--gradient-card)', touchAction: 'pan-y' }}
+      >
+        {/* Color accent bar */}
+        {category && (
+          <div
+            className="absolute left-0 top-0 bottom-0 w-[3px]"
+            style={{ backgroundColor: `hsl(${category.color})` }}
+          />
         )}
 
-        {/* Content */}
-        <p className="text-sm leading-relaxed font-body text-foreground/90 whitespace-pre-wrap">
-          {entry.content}
-        </p>
-
-        {/* Prayer answered info */}
-        {isPrayer && entry.isAnswered && entry.answerDays !== undefined && (
-          <div className="mt-2.5 flex items-center gap-1.5 text-xs font-body"
-            style={{ color: 'hsl(142 55% 38%)' }}>
-            <CheckCircle2 size={12} />
-            <span>{entry.answerDays === 0 ? '같은 날 응답' : `${entry.answerDays}일 만에 응답됨`}</span>
+        <div className="pl-4 pr-4 pt-3.5 pb-3">
+          {/* Header row */}
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {category && <CategoryBadge category={category} size="sm" />}
+              
+              {/* Prayer status badges */}
+              {isPrayer && entry.isAnswered && (
+                <span
+                  className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-body font-medium"
+                  style={{
+                    backgroundColor: 'hsl(152 55% 50% / 0.12)',
+                    color: 'hsl(152 55% 36%)',
+                    border: '1px solid hsl(152 55% 50% / 0.2)',
+                  }}
+                >
+                  <CheckCircle2 size={10} />
+                  응답됨
+                </span>
+              )}
+              {isPrayer && !entry.isAnswered && isCarried && (
+                <span
+                  className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-body"
+                  style={{
+                    backgroundColor: 'hsl(220 50% 60% / 0.1)',
+                    color: 'hsl(220 45% 52%)',
+                    border: '1px solid hsl(220 50% 60% / 0.15)',
+                  }}
+                >
+                  <Heart size={9} />
+                  계속 기도 중
+                </span>
+              )}
+            </div>
+            
+            {/* Time */}
+            <span className="text-[11px] text-muted-foreground font-body shrink-0">
+              {showDate ? `${entry.recordDate.slice(5).replace('-', '/')} ${timeStr}` : timeStr}
+            </span>
           </div>
-        )}
 
-        {/* Footer */}
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground font-body">
-            {showDate
-              ? `${entry.recordDate.slice(5).replace('-', '/')} ${timeStr}`
-              : timeStr}
-          </span>
-          {/* Mark as answered button */}
-          {isPrayer && !entry.isAnswered && onMarkAnswered && (
-            <button
-              onClick={() => onMarkAnswered(entry.id)}
-              className="text-xs font-body font-medium px-3 py-1 rounded-full transition-all"
-              style={{
-                backgroundColor: 'hsl(220 60% 62% / 0.12)',
-                color: 'hsl(220 60% 52%)',
-                border: '1px solid hsl(220 60% 62% / 0.3)',
-              }}
+          {/* Photo */}
+          {entry.imageUrl && (
+            <div className="mb-2.5 -mx-1 rounded-xl overflow-hidden">
+              <img
+                src={entry.imageUrl}
+                alt="기록 사진"
+                className="w-full max-h-48 object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+
+          {/* Content */}
+          <p className="text-[14px] leading-[1.75] font-body whitespace-pre-wrap" style={{ color: 'hsl(var(--foreground) / 0.88)' }}>
+            {entry.content}
+          </p>
+
+          {/* Prayer answered info */}
+          {isPrayer && entry.isAnswered && entry.answerDays !== undefined && (
+            <div
+              className="mt-2 flex items-center gap-1.5 text-[11px] font-body font-medium"
+              style={{ color: 'hsl(152 55% 36%)' }}
             >
-              응답 표시
-            </button>
+              <CheckCircle2 size={11} />
+              <span>
+                {entry.answerDays === 0 ? '같은 날 응답됨' : `${entry.answerDays}일 만에 응답됨`}
+              </span>
+            </div>
+          )}
+
+          {/* Prayer mark answered button */}
+          {isPrayer && !entry.isAnswered && onMarkAnswered && !isCarried && (
+            <div className="mt-2.5">
+              <button
+                onClick={() => onMarkAnswered(entry.id)}
+                className="text-[12px] font-body font-medium px-3 py-1.5 rounded-xl transition-all active:scale-95"
+                style={{
+                  backgroundColor: 'hsl(220 60% 62% / 0.1)',
+                  color: 'hsl(220 55% 50%)',
+                  border: '1px solid hsl(220 60% 62% / 0.2)',
+                }}
+              >
+                🙏 응답 표시
+              </button>
+            </div>
+          )}
+
+          {/* Carried prayer - mark answered */}
+          {isPrayer && !entry.isAnswered && onMarkAnswered && isCarried && (
+            <div className="mt-2.5">
+              <button
+                onClick={() => onMarkAnswered(entry.id)}
+                className="text-[12px] font-body font-medium px-3 py-1.5 rounded-xl transition-all active:scale-95"
+                style={{
+                  backgroundColor: 'hsl(152 50% 45% / 0.1)',
+                  color: 'hsl(152 50% 38%)',
+                  border: '1px solid hsl(152 50% 45% / 0.18)',
+                }}
+              >
+                ✨ 응답됨으로 표시
+              </button>
+            </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
