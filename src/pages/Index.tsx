@@ -286,6 +286,8 @@ const Index = () => {
         presetEmojis={PRESET_EMOJIS}
         presetColors={PRESET_COLORS}
       />
+
+      <InstallPrompt />
     </div>
   );
 };
