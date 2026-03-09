@@ -143,41 +143,13 @@ const Index = () => {
 
       case 'monthly':
         return (
-          <div className="space-y-6">
-            <MonthlyCalendar
-              entries={entries}
-              categories={categories}
-              onDayClick={handleDayClick}
-            />
-            {selectedDay && (
-              <div className="mt-4">
-                <h3 className="font-display text-[15px] font-medium text-foreground mb-3">
-                  {new Date(selectedDay).toLocaleDateString('ko-KR', {
-                    month: 'long',
-                    day: 'numeric',
-                    weekday: 'short',
-                  })}
-                </h3>
-                <AnimatePresence mode="popLayout">
-                  {(entriesByDate[selectedDay] ?? []).length > 0 ? (
-                    (entriesByDate[selectedDay] ?? []).map((entry) => (
-                      <EntryCard
-                        key={entry.id}
-                        entry={entry}
-                        category={categories.find((c) => c.id === entry.categoryId)}
-                        onDelete={deleteEntry}
-                        onMarkAnswered={markPrayerAnswered}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground font-body py-6 text-center">
-                      이 날의 기록이 없습니다
-                    </p>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-          </div>
+          <MonthlyCalendar
+            entries={entries}
+            categories={categories}
+            onDayClick={(d) => setSelectedDay(d)}
+            onDelete={deleteEntry}
+            onMarkAnswered={markPrayerAnswered}
+          />
         );
 
       case 'stats':
