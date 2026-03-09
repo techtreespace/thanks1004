@@ -180,10 +180,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const t = useCallback((key: TranslationKey, params?: Record<string, string | number>): string => {
     const entry = translations[key];
     if (!entry) return key;
-    let text = entry[locale] ?? entry.ko;
+    let text: string = entry[locale] ?? entry.ko;
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
-        text = text.replaceAll(`{${k}}`, String(v));
+        text = text.split(`{${k}}`).join(String(v));
       });
     }
     return text;
