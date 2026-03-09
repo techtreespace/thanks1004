@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Entry, Category } from '@/types';
 import { EntryCard } from './EntryCard';
-import { formatDisplayDate } from '@/lib/storage';
 import { Feather } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 interface DayColumnProps {
   dateStr: string;
@@ -23,6 +23,7 @@ export function DayColumn({
   onMarkAnswered,
   isToday = false,
 }: DayColumnProps) {
+  const { t, formatDisplayDate, weekdayShort } = useI18n();
   const getCat = (id: string) => categories.find((c) => c.id === id);
   const totalCount = entries.length + carriedPrayers.length;
 
@@ -42,7 +43,7 @@ export function DayColumn({
           {formatDisplayDate(dateStr)}
         </h2>
         <span className="text-[11px] text-muted-foreground/70 font-body">
-          {new Date(dateStr).toLocaleDateString('ko-KR', { weekday: 'short' })}
+          {weekdayShort(dateStr)}
         </span>
         {totalCount > 0 && (
           <span
@@ -83,8 +84,8 @@ export function DayColumn({
             style={{ borderColor: 'hsl(var(--border) / 0.8)' }}
           >
             <Feather size={24} className="mx-auto mb-2 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground/60 font-body">아직 기록이 없어요</p>
-            <p className="text-xs text-muted-foreground/40 font-body mt-1">+ 버튼을 눌러 시작하세요</p>
+            <p className="text-sm text-muted-foreground/60 font-body">{t('empty.noEntries')}</p>
+            <p className="text-xs text-muted-foreground/40 font-body mt-1">{t('empty.tapToStart')}</p>
           </motion.div>
         ) : (
           entries.map((entry) => (

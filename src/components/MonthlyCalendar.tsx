@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Entry, Category } from '@/types';
 import { formatDate, getMonthDates, todayStr } from '@/lib/storage';
 import { EntryCard } from './EntryCard';
+import { useI18n, TranslationKey } from '@/lib/i18n';
 
 interface MonthlyCalendarProps {
   entries: Entry[];
@@ -17,6 +18,10 @@ function getYearMonth(dateStr: string) {
   return dateStr.slice(0, 7);
 }
 
+const DAY_KEYS: TranslationKey[] = [
+  'day.sun', 'day.mon', 'day.tue', 'day.wed', 'day.thu', 'day.fri', 'day.sat',
+];
+
 export function MonthlyCalendar({
   entries,
   categories,
@@ -24,6 +29,7 @@ export function MonthlyCalendar({
   onDelete,
   onMarkAnswered,
 }: MonthlyCalendarProps) {
+  const { t, formatMonthYear, dateLocale } = useI18n();
   const today = todayStr();
   const [yearMonth, setYearMonth] = useState(getYearMonth(today));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -42,9 +48,8 @@ export function MonthlyCalendar({
   };
 
   const dates = getMonthDates(yearMonth);
-  const firstDay = new Date(dates[0]).getDay(); // 0=Sun
+  const firstDay = new Date(dates[0]).getDay();
 
-  // Build entry map for the month
   const entryMap = useMemo(() => {
     const m: Record<string, Entry[]> = {};
     entries.forEach((e) => {
@@ -54,7 +59,6 @@ export function MonthlyCalendar({
     return m;
   }, [entries]);
 
-  // Month-level stats for the legend
   const monthStats = useMemo(() => {
     const counts: Record<string, number> = {};
     dates.forEach((d) => {
@@ -74,39 +78,30 @@ export function MonthlyCalendar({
 
   const selectedEntries = selectedDate ? (entryMap[selectedDate] ?? []) : [];
 
-  const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-
   return (
     <div className="space-y-4">
-      {/* Calendar card */}
       <div
         className="rounded-2xl overflow-hidden"
         style={{ backgroundColor: 'hsl(var(--card))', boxShadow: 'var(--shadow-card)' }}
       >
         {/* Month nav */}
         <div className="flex items-center justify-between px-4 py-3.5">
-          <button
-            onClick={prevMonth}
-            className="p-2 -ml-1 rounded-xl active:scale-90 transition-transform"
-          >
+          <button onClick={prevMonth} className="p-2 -ml-1 rounded-xl active:scale-90 transition-transform">
             <ChevronLeft size={18} className="text-muted-foreground" />
           </button>
           <h3 className="font-display text-[15px] font-medium text-foreground">
-            {year}년 {month}월
+            {formatMonthYear(year, month)}
           </h3>
-          <button
-            onClick={nextMonth}
-            className="p-2 -mr-1 rounded-xl active:scale-90 transition-transform"
-          >
+          <button onClick={nextMonth} className="p-2 -mr-1 rounded-xl active:scale-90 transition-transform">
             <ChevronRight size={18} className="text-muted-foreground" />
           </button>
         </div>
 
         {/* Day labels */}
         <div className="grid grid-cols-7 px-2">
-          {DAY_LABELS.map((d, i) => (
+          {DAY_KEYS.map((key, i) => (
             <div
-              key={d}
+              key={key}
               className="py-1.5 text-center text-[11px] font-body font-medium"
               style={{
                 color:
@@ -117,14 +112,13 @@ export function MonthlyCalendar({
                       : 'hsl(var(--muted-foreground))',
               }}
             >
-              {d}
+              {t(key)}
             </div>
           ))}
         </div>
 
         {/* Calendar grid */}
         <div className="grid grid-cols-7 px-1.5 pb-2">
-          {/* Empty leading cells */}
           {Array.from({ length: firstDay }).map((_, i) => (
             <div key={`empty-${i}`} className="aspect-square" />
           ))}
@@ -138,7 +132,6 @@ export function MonthlyCalendar({
             const hasEntries = dayEntries.length > 0;
             const isFuture = dateStr > today;
 
-            // Group entries by category, count per category
             const catCounts: { catId: string; count: number }[] = [];
             const seen = new Set<string>();
             dayEntries.forEach((e) => {
@@ -151,7 +144,6 @@ export function MonthlyCalendar({
               }
             });
 
-            // Show individual dots for each entry (max 6)
             const dots = dayEntries.slice(0, 6).map((e) => {
               const cat = categories.find((c) => c.id === e.categoryId);
               return cat ? cat.color : 'var(--muted-foreground)';
@@ -164,13 +156,10 @@ export function MonthlyCalendar({
                 className="relative flex flex-col items-center justify-start rounded-xl transition-all active:scale-90 py-1"
                 style={{
                   aspectRatio: '1',
-                  backgroundColor: isSelected
-                    ? 'hsl(var(--primary) / 0.08)'
-                    : 'transparent',
+                  backgroundColor: isSelected ? 'hsl(var(--primary) / 0.08)' : 'transparent',
                   opacity: isFuture ? 0.4 : 1,
                 }}
               >
-                {/* Day number */}
                 <span
                   className="text-[13px] font-body font-medium w-7 h-7 flex items-center justify-center rounded-full transition-all"
                   style={{
@@ -196,7 +185,6 @@ export function MonthlyCalendar({
                   {day}
                 </span>
 
-                {/* Color dots grid */}
                 {dots.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-[2px] mt-0.5 max-w-[22px]">
                     {dots.map((color, i) => (
@@ -209,7 +197,6 @@ export function MonthlyCalendar({
                   </div>
                 )}
 
-                {/* Emotional intensity ring for many entries */}
                 {dayEntries.length >= 3 && !isToday && (
                   <div
                     className="absolute inset-0.5 rounded-xl pointer-events-none"
@@ -231,15 +218,10 @@ export function MonthlyCalendar({
           >
             {activeCategories.map((cat) => (
               <div key={cat.id} className="flex items-center gap-1.5">
-                <span
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: `hsl(${cat.color})` }}
-                />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${cat.color})` }} />
                 <span className="text-[11px] font-body text-muted-foreground">
                   {cat.emoji} {cat.name}
-                  <span className="ml-1 font-medium text-foreground/70">
-                    {monthStats[cat.id]}
-                  </span>
+                  <span className="ml-1 font-medium text-foreground/70">{monthStats[cat.id]}</span>
                 </span>
               </div>
             ))}
@@ -257,7 +239,6 @@ export function MonthlyCalendar({
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
           >
-            {/* Date header */}
             <div className="flex items-center gap-2 mb-3 px-0.5">
               <span
                 className="w-2 h-2 rounded-full"
@@ -269,14 +250,14 @@ export function MonthlyCalendar({
                 }}
               />
               <h3 className="font-display text-[15px] font-medium text-foreground">
-                {new Date(selectedDate).toLocaleDateString('ko-KR', {
+                {new Date(selectedDate).toLocaleDateString(dateLocale, {
                   month: 'long',
                   day: 'numeric',
                   weekday: 'long',
                 })}
               </h3>
               <span className="ml-auto text-[11px] font-body text-muted-foreground">
-                {selectedEntries.length > 0 ? `${selectedEntries.length}개` : ''}
+                {selectedEntries.length > 0 ? selectedEntries.length : ''}
               </span>
             </div>
 
@@ -297,7 +278,7 @@ export function MonthlyCalendar({
                 className="rounded-2xl py-10 text-center border border-dashed"
                 style={{ borderColor: 'hsl(var(--border) / 0.6)' }}
               >
-                <p className="text-sm text-muted-foreground/60 font-body">이 날의 기록이 없어요</p>
+                <p className="text-sm text-muted-foreground/60 font-body">{t('empty.noEntriesDay')}</p>
               </div>
             )}
           </motion.div>

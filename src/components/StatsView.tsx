@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Entry, Category, DEFAULT_CATEGORY_IDS } from '@/types';
+import { useI18n } from '@/lib/i18n';
 
 type TimeRange = '7d' | '30d' | 'all';
 
@@ -16,6 +17,7 @@ function getDaysAgoStr(days: number): string {
 }
 
 export function StatsView({ entries, categories }: StatsViewProps) {
+  const { t } = useI18n();
   const [range, setRange] = useState<TimeRange>('all');
 
   const filtered = useMemo(() => {
@@ -51,14 +53,16 @@ export function StatsView({ entries, categories }: StatsViewProps) {
 
   const maxCount = Math.max(...Object.values(stats.byCategory), 1);
 
-  const ranges: { key: TimeRange; label: string }[] = [
-    { key: '7d', label: '7일' },
-    { key: '30d', label: '30일' },
-    { key: 'all', label: '전체' },
+  const ranges: { key: TimeRange; labelKey: 'stats.range7' | 'stats.range30' | 'stats.rangeAll' }[] = [
+    { key: '7d', labelKey: 'stats.range7' },
+    { key: '30d', labelKey: 'stats.range30' },
+    { key: 'all', labelKey: 'stats.rangeAll' },
   ];
 
   const prayerTotal = stats.answered + stats.unanswered;
   const answeredPct = prayerTotal > 0 ? Math.round((stats.answered / prayerTotal) * 100) : 0;
+
+  const rangeLabel = range === '7d' ? t('stats.last7') : range === '30d' ? t('stats.last30') : t('stats.allTime');
 
   return (
     <div className="space-y-5 pb-8">
@@ -75,7 +79,7 @@ export function StatsView({ entries, categories }: StatsViewProps) {
               boxShadow: range === r.key ? 'var(--shadow-soft)' : 'none',
             }}
           >
-            {r.label}
+            {t(r.labelKey)}
           </button>
         ))}
       </div>
@@ -89,17 +93,17 @@ export function StatsView({ entries, categories }: StatsViewProps) {
         style={{ background: 'var(--gradient-card)' }}
       >
         <p className="text-xs text-muted-foreground font-body mb-1">
-          {range === '7d' ? '최근 7일' : range === '30d' ? '최근 30일' : '전체'} 기록
+          {rangeLabel} {t('stats.entries')}
         </p>
         <div className="flex items-baseline gap-1">
           <span className="text-4xl font-display font-medium text-foreground">{stats.total}</span>
-          <span className="text-sm text-muted-foreground font-body">개</span>
+          <span className="text-sm text-muted-foreground font-body">{t('stats.unit')}</span>
         </div>
       </motion.div>
 
       {/* Category bars */}
       <div>
-        <h3 className="text-sm font-body font-medium text-muted-foreground mb-3">카테고리별</h3>
+        <h3 className="text-sm font-body font-medium text-muted-foreground mb-3">{t('stats.byCategory')}</h3>
         <div className="space-y-3">
           {categories.map((cat, i) => {
             const count = stats.byCategory[cat.id] ?? 0;
@@ -140,9 +144,8 @@ export function StatsView({ entries, categories }: StatsViewProps) {
 
       {/* Prayer stats */}
       <div>
-        <h3 className="text-sm font-body font-medium text-muted-foreground mb-3">기도 통계</h3>
+        <h3 className="text-sm font-body font-medium text-muted-foreground mb-3">{t('stats.prayerStats')}</h3>
 
-        {/* Answered / Unanswered donut-style bar */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -150,7 +153,7 @@ export function StatsView({ entries, categories }: StatsViewProps) {
           style={{ backgroundColor: 'hsl(var(--card))' }}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-body text-muted-foreground">응답률</span>
+            <span className="text-xs font-body text-muted-foreground">{t('stats.responseRate')}</span>
             <span className="text-xs font-body font-semibold text-foreground">
               {prayerTotal > 0 ? `${answeredPct}%` : '-'}
             </span>
@@ -180,21 +183,20 @@ export function StatsView({ entries, categories }: StatsViewProps) {
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'hsl(142 55% 42%)' }} />
-              <span className="text-[11px] font-body text-muted-foreground">응답됨</span>
+              <span className="text-[11px] font-body text-muted-foreground">{t('stats.answered')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'hsl(220 60% 62%)' }} />
-              <span className="text-[11px] font-body text-muted-foreground">기도 중</span>
+              <span className="text-[11px] font-body text-muted-foreground">{t('stats.praying')}</span>
             </div>
           </div>
         </motion.div>
 
-        {/* Stat cards */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: '응답됨', value: stats.answered, color: '142 55% 42%' },
-            { label: '기도 중', value: stats.unanswered, color: '220 60% 62%' },
-            { label: '평균 응답', value: stats.avgDays !== null ? `${stats.avgDays}일` : '-', color: '34 80% 52%' },
+            { label: t('stats.answered'), value: stats.answered, color: '142 55% 42%' },
+            { label: t('stats.praying'), value: stats.unanswered, color: '220 60% 62%' },
+            { label: t('stats.avgResponse'), value: stats.avgDays !== null ? `${stats.avgDays}${t('stats.days')}` : '-', color: '34 80% 52%' },
           ].map((item, i) => (
             <motion.div
               key={item.label}

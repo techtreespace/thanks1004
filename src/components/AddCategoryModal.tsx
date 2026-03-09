@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 interface AddCategoryModalProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface AddCategoryModalProps {
 }
 
 export function AddCategoryModal({ open, onClose, onSubmit, presetEmojis, presetColors }: AddCategoryModalProps) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(presetEmojis[0]);
   const [color, setColor] = useState(presetColors[0]);
@@ -49,7 +51,7 @@ export function AddCategoryModal({ open, onClose, onSubmit, presetEmojis, preset
             style={{ backgroundColor: 'hsl(var(--card))' }}
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-display text-lg text-foreground">카테고리 추가</h3>
+              <h3 className="font-display text-lg text-foreground">{t('addCategory.title')}</h3>
               <button onClick={handleClose} className="p-1.5 rounded-full hover:bg-muted transition-colors">
                 <X size={16} className="text-muted-foreground" />
               </button>
@@ -65,13 +67,13 @@ export function AddCategoryModal({ open, onClose, onSubmit, presetEmojis, preset
                   color: `hsl(${color})`,
                 }}
               >
-                {name || '카테고리 이름'}
+                {name || t('addCategory.namePlaceholder')}
               </span>
             </div>
 
             {/* Emoji picker */}
             <div className="mb-4">
-              <p className="text-xs text-muted-foreground font-body mb-2">이모지 선택</p>
+              <p className="text-xs text-muted-foreground font-body mb-2">{t('addCategory.emojiLabel')}</p>
               <div className="flex flex-wrap gap-2">
                 {presetEmojis.map((e) => (
                   <button
@@ -88,7 +90,7 @@ export function AddCategoryModal({ open, onClose, onSubmit, presetEmojis, preset
 
             {/* Color picker */}
             <div className="mb-5">
-              <p className="text-xs text-muted-foreground font-body mb-2">색상 선택</p>
+              <p className="text-xs text-muted-foreground font-body mb-2">{t('addCategory.colorLabel')}</p>
               <div className="flex flex-wrap gap-2">
                 {presetColors.map((c) => (
                   <button
@@ -107,7 +109,7 @@ export function AddCategoryModal({ open, onClose, onSubmit, presetEmojis, preset
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              placeholder="카테고리 이름"
+              placeholder={t('addCategory.namePlaceholder')}
               maxLength={12}
               className="w-full px-4 py-2.5 rounded-xl text-sm font-body outline-none border transition-colors mb-4"
               style={{
@@ -126,7 +128,7 @@ export function AddCategoryModal({ open, onClose, onSubmit, presetEmojis, preset
                 color: 'hsl(var(--primary-foreground))',
               }}
             >
-              추가하기
+              {t('addCategory.submit')}
             </button>
           </motion.div>
         </>

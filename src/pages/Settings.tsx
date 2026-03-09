@@ -1,18 +1,19 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Download, Upload, Trash2, AlertTriangle, CheckCircle2, Shield } from 'lucide-react';
+import { ArrowLeft, Download, Upload, Trash2, AlertTriangle, CheckCircle2, Shield, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { exportAllData, importData, clearAllData, loadEntries, loadCategories, ExportData } from '@/lib/storage';
 import { toast } from 'sonner';
+import { useI18n, Locale } from '@/lib/i18n';
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { t, locale, setLocale, dateLocale } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [importMode, setImportMode] = useState<'replace' | 'merge' | null>(null);
   const [pendingData, setPendingData] = useState<ExportData | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  // ── Export ──
   const handleExport = () => {
     const data = exportAllData();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -24,10 +25,9 @@ const Settings = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('백업 파일이 다운로드되었어요');
+    toast.success(t('toast.exported'));
   };
 
-  // ── Import ──
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -36,19 +36,17 @@ const Settings = () => {
     reader.onload = (ev) => {
       try {
         const raw = JSON.parse(ev.target?.result as string);
-        // Validate structure
         if (!raw.entries || !raw.categories) {
-          toast.error('올바른 Thanks. 백업 파일이 아닙니다');
+          toast.error(t('toast.invalidFile'));
           return;
         }
         setPendingData(raw as ExportData);
-        setImportMode('replace'); // Show choice modal
+        setImportMode('replace');
       } catch {
-        toast.error('파일을 읽을 수 없습니다');
+        toast.error(t('toast.fileError'));
       }
     };
     reader.readAsText(file);
-    // Reset input so same file can be selected again
     e.target.value = '';
   };
 
@@ -57,9 +55,8 @@ const Settings = () => {
 
     if (mode === 'replace') {
       importData(pendingData);
-      toast.success(`${pendingData.entries.length}개의 기록을 복원했어요`);
+      toast.success(t('toast.importedReplace', { n: pendingData.entries.length }));
     } else {
-      // Merge: add non-duplicate entries
       const existing = loadEntries();
       const existingIds = new Set(existing.map((e) => e.id));
       const newEntries = pendingData.entries.filter((e) => !existingIds.has(e.id));
@@ -73,21 +70,19 @@ const Settings = () => {
         entries: [...existing, ...newEntries],
         categories: [...existingCats, ...newCats],
       });
-      toast.success(`${newEntries.length}개의 새 기록을 추가했어요`);
+      toast.success(t('toast.importedMerge', { n: newEntries.length }));
     }
 
     setPendingData(null);
     setImportMode(null);
   };
 
-  // ── Clear All ──
   const handleClearAll = () => {
     clearAllData();
     setShowClearConfirm(false);
-    toast.success('모든 데이터가 삭제되었어요');
+    toast.success(t('toast.cleared'));
   };
 
-  // Stats
   const entries = loadEntries();
   const categories = loadCategories();
 
@@ -108,12 +103,44 @@ const Settings = () => {
           >
             <ArrowLeft size={20} className="text-foreground" />
           </button>
-          <h1 className="font-display text-lg font-medium text-foreground">설정</h1>
+          <h1 className="font-display text-lg font-medium text-foreground">{t('settings.title')}</h1>
         </div>
       </header>
 
       <main className="px-4 pb-12 pt-4">
         <div className="max-w-lg mx-auto space-y-6">
+
+          {/* Language */}
+          <section
+            className="rounded-2xl overflow-hidden"
+            style={{ backgroundColor: 'hsl(var(--card))', boxShadow: 'var(--shadow-card)' }}
+          >
+            <div className="p-5 pb-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Globe size={16} style={{ color: 'hsl(var(--primary))' }} />
+                <h2 className="text-sm font-body font-semibold text-foreground">{t('settings.language')}</h2>
+              </div>
+              <p className="text-xs font-body text-muted-foreground">{t('settings.languageDesc')}</p>
+            </div>
+            <div className="px-5 pb-4 flex gap-2">
+              {([
+                { key: 'ko' as Locale, label: '한국어' },
+                { key: 'en' as Locale, label: 'English' },
+              ]).map((lang) => (
+                <button
+                  key={lang.key}
+                  onClick={() => setLocale(lang.key)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-body font-medium transition-all"
+                  style={{
+                    backgroundColor: locale === lang.key ? 'hsl(var(--primary))' : 'hsl(var(--muted) / 0.6)',
+                    color: locale === lang.key ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
+                  }}
+                >
+                  {lang.label}
+                </button>
+              ))}
+            </div>
+          </section>
 
           {/* Data overview */}
           <section
@@ -122,16 +149,16 @@ const Settings = () => {
           >
             <div className="flex items-center gap-2 mb-4">
               <Shield size={16} style={{ color: 'hsl(var(--primary))' }} />
-              <h2 className="text-sm font-body font-semibold text-foreground">내 데이터</h2>
+              <h2 className="text-sm font-body font-semibold text-foreground">{t('settings.myData')}</h2>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl p-3" style={{ backgroundColor: 'hsl(var(--muted) / 0.6)' }}>
                 <p className="text-2xl font-display font-medium text-foreground">{entries.length}</p>
-                <p className="text-xs font-body text-muted-foreground mt-0.5">총 기록</p>
+                <p className="text-xs font-body text-muted-foreground mt-0.5">{t('settings.totalEntries')}</p>
               </div>
               <div className="rounded-xl p-3" style={{ backgroundColor: 'hsl(var(--muted) / 0.6)' }}>
                 <p className="text-2xl font-display font-medium text-foreground">{categories.length}</p>
-                <p className="text-xs font-body text-muted-foreground mt-0.5">카테고리</p>
+                <p className="text-xs font-body text-muted-foreground mt-0.5">{t('settings.categories')}</p>
               </div>
             </div>
           </section>
@@ -142,52 +169,38 @@ const Settings = () => {
             style={{ backgroundColor: 'hsl(var(--card))', boxShadow: 'var(--shadow-card)' }}
           >
             <div className="p-5 pb-3">
-              <h2 className="text-sm font-body font-semibold text-foreground mb-1">백업 & 복원</h2>
-              <p className="text-xs font-body text-muted-foreground">데이터를 안전하게 보관하세요</p>
+              <h2 className="text-sm font-body font-semibold text-foreground mb-1">{t('settings.backupRestore')}</h2>
+              <p className="text-xs font-body text-muted-foreground">{t('settings.keepSafe')}</p>
             </div>
 
-            {/* Export */}
             <button
               onClick={handleExport}
               className="w-full flex items-center gap-3 px-5 py-4 transition-colors active:scale-[0.99]"
               style={{ borderTop: '1px solid hsl(var(--border) / 0.5)' }}
             >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: 'hsl(152 55% 45% / 0.1)' }}
-              >
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'hsl(152 55% 45% / 0.1)' }}>
                 <Download size={17} style={{ color: 'hsl(152 55% 40%)' }} />
               </div>
               <div className="text-left flex-1">
-                <p className="text-sm font-body font-medium text-foreground">데이터 내보내기</p>
-                <p className="text-xs font-body text-muted-foreground">JSON 파일로 백업</p>
+                <p className="text-sm font-body font-medium text-foreground">{t('settings.export')}</p>
+                <p className="text-xs font-body text-muted-foreground">{t('settings.exportDesc')}</p>
               </div>
             </button>
 
-            {/* Import */}
             <button
               onClick={() => fileRef.current?.click()}
               className="w-full flex items-center gap-3 px-5 py-4 transition-colors active:scale-[0.99]"
               style={{ borderTop: '1px solid hsl(var(--border) / 0.5)' }}
             >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: 'hsl(220 60% 55% / 0.1)' }}
-              >
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'hsl(220 60% 55% / 0.1)' }}>
                 <Upload size={17} style={{ color: 'hsl(220 60% 50%)' }} />
               </div>
               <div className="text-left flex-1">
-                <p className="text-sm font-body font-medium text-foreground">데이터 가져오기</p>
-                <p className="text-xs font-body text-muted-foreground">백업 파일에서 복원</p>
+                <p className="text-sm font-body font-medium text-foreground">{t('settings.import')}</p>
+                <p className="text-xs font-body text-muted-foreground">{t('settings.importDesc')}</p>
               </div>
             </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".json,application/json"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
+            <input ref={fileRef} type="file" accept=".json,application/json" className="hidden" onChange={handleFileSelect} />
           </section>
 
           {/* Danger zone */}
@@ -196,28 +209,25 @@ const Settings = () => {
             style={{ backgroundColor: 'hsl(var(--card))', boxShadow: 'var(--shadow-card)' }}
           >
             <div className="p-5 pb-3">
-              <h2 className="text-sm font-body font-semibold text-destructive">위험 영역</h2>
+              <h2 className="text-sm font-body font-semibold text-destructive">{t('settings.dangerZone')}</h2>
             </div>
             <button
               onClick={() => setShowClearConfirm(true)}
               className="w-full flex items-center gap-3 px-5 py-4 transition-colors active:scale-[0.99]"
               style={{ borderTop: '1px solid hsl(var(--border) / 0.5)' }}
             >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: 'hsl(var(--destructive) / 0.1)' }}
-              >
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: 'hsl(var(--destructive) / 0.1)' }}>
                 <Trash2 size={17} className="text-destructive" />
               </div>
               <div className="text-left flex-1">
-                <p className="text-sm font-body font-medium text-destructive">모든 데이터 삭제</p>
-                <p className="text-xs font-body text-muted-foreground">모든 기록과 카테고리를 삭제합니다</p>
+                <p className="text-sm font-body font-medium text-destructive">{t('settings.clearAll')}</p>
+                <p className="text-xs font-body text-muted-foreground">{t('settings.clearAllDesc')}</p>
               </div>
             </button>
           </section>
 
           <p className="text-center text-[11px] font-body text-muted-foreground/50 pt-4">
-            Thanks. v1.0 · 모든 데이터는 이 기기에만 저장됩니다
+            Thanks. v1.0 · {t('settings.footer')}
           </p>
         </div>
       </main>
@@ -243,16 +253,16 @@ const Settings = () => {
             >
               <div className="flex items-center gap-2 mb-4">
                 <Upload size={18} style={{ color: 'hsl(var(--primary))' }} />
-                <h3 className="font-display text-lg text-foreground">데이터 가져오기</h3>
+                <h3 className="font-display text-lg text-foreground">{t('import.title')}</h3>
               </div>
 
               <div className="rounded-xl p-3 mb-4" style={{ backgroundColor: 'hsl(var(--muted) / 0.6)' }}>
                 <p className="text-xs font-body text-muted-foreground">
-                  파일: <strong className="text-foreground">{pendingData.entries.length}개 기록</strong>, {pendingData.categories.length}개 카테고리
+                  {t('import.fileInfo', { n: pendingData.entries.length })}, {t('import.categoriesCount', { n: pendingData.categories.length })}
                 </p>
                 {pendingData.exportedAt && (
                   <p className="text-xs font-body text-muted-foreground mt-0.5">
-                    백업일: {new Date(pendingData.exportedAt).toLocaleDateString('ko-KR')}
+                    {t('import.backupDate')}: {new Date(pendingData.exportedAt).toLocaleDateString(dateLocale)}
                   </p>
                 )}
               </div>
@@ -261,30 +271,24 @@ const Settings = () => {
                 <button
                   onClick={() => executeImport('replace')}
                   className="w-full py-3 rounded-xl text-sm font-body font-medium transition-all active:scale-[0.98]"
-                  style={{
-                    backgroundColor: 'hsl(var(--primary))',
-                    color: 'hsl(var(--primary-foreground))',
-                  }}
+                  style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
                 >
-                  전체 교체
-                  <span className="block text-[11px] font-normal opacity-70 mt-0.5">기존 데이터를 백업으로 교체</span>
+                  {t('import.replace')}
+                  <span className="block text-[11px] font-normal opacity-70 mt-0.5">{t('import.replaceDesc')}</span>
                 </button>
                 <button
                   onClick={() => executeImport('merge')}
                   className="w-full py-3 rounded-xl text-sm font-body font-medium transition-all active:scale-[0.98]"
-                  style={{
-                    backgroundColor: 'hsl(var(--secondary))',
-                    color: 'hsl(var(--secondary-foreground))',
-                  }}
+                  style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}
                 >
-                  병합하기
-                  <span className="block text-[11px] font-normal opacity-70 mt-0.5">기존 데이터에 새 기록만 추가</span>
+                  {t('import.merge')}
+                  <span className="block text-[11px] font-normal opacity-70 mt-0.5">{t('import.mergeDesc')}</span>
                 </button>
                 <button
                   onClick={() => { setPendingData(null); setImportMode(null); }}
                   className="w-full py-2.5 text-sm font-body text-muted-foreground"
                 >
-                  취소
+                  {t('import.cancel')}
                 </button>
               </div>
             </motion.div>
@@ -313,25 +317,23 @@ const Settings = () => {
             >
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle size={18} className="text-destructive" />
-                <h3 className="font-display text-lg text-foreground">정말 삭제할까요?</h3>
+                <h3 className="font-display text-lg text-foreground">{t('clear.title')}</h3>
               </div>
-              <p className="text-sm font-body text-muted-foreground mb-5">
-                모든 기록과 카테고리가 삭제됩니다. 이 작업은 되돌릴 수 없어요. 먼저 백업을 권장합니다.
-              </p>
+              <p className="text-sm font-body text-muted-foreground mb-5">{t('clear.message')}</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowClearConfirm(false)}
                   className="flex-1 py-2.5 rounded-xl text-sm font-body font-medium"
                   style={{ backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}
                 >
-                  취소
+                  {t('clear.cancel')}
                 </button>
                 <button
                   onClick={handleClearAll}
                   className="flex-1 py-2.5 rounded-xl text-sm font-body font-medium"
                   style={{ backgroundColor: 'hsl(var(--destructive))', color: 'hsl(var(--destructive-foreground))' }}
                 >
-                  삭제하기
+                  {t('clear.confirm')}
                 </button>
               </div>
             </motion.div>
