@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import { ViewMode, DEFAULT_CATEGORY_IDS } from '@/types';
 import { useEntries, AddEntryData } from '@/hooks/useEntries';
 import { useCategories } from '@/hooks/useCategories';
-import { todayStr, addDays } from '@/lib/storage';
+import { todayStr, addDays, formatKoreanDate } from '@/lib/storage';
 
 import { ViewSelector } from '@/components/ViewSelector';
 import { DayColumn } from '@/components/DayColumn';
@@ -37,7 +37,6 @@ const Index = () => {
     return m;
   }, [entries]);
 
-  // Unanswered prayers from past days carry to today
   const carriedPrayers = useMemo(
     () =>
       entries.filter(
@@ -62,6 +61,11 @@ const Index = () => {
     setSelectedDay(dateStr);
     setShowAddEntry(true);
   };
+
+  // Today's greeting
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 6 ? '고요한 밤' : hour < 12 ? '좋은 아침' : hour < 18 ? '따뜻한 오후' : '편안한 저녁';
 
   const renderView = () => {
     switch (view) {
@@ -142,10 +146,9 @@ const Index = () => {
               categories={categories}
               onDayClick={handleDayClick}
             />
-            {/* Show entries for clicked day */}
             {selectedDay && (
               <div className="mt-4">
-                <h3 className="font-display text-base font-medium text-foreground mb-3">
+                <h3 className="font-display text-[15px] font-medium text-foreground mb-3">
                   {new Date(selectedDay).toLocaleDateString('ko-KR', {
                     month: 'long',
                     day: 'numeric',
@@ -155,17 +158,16 @@ const Index = () => {
                 <AnimatePresence mode="popLayout">
                   {(entriesByDate[selectedDay] ?? []).length > 0 ? (
                     (entriesByDate[selectedDay] ?? []).map((entry) => (
-                      <motion.div key={entry.id} className="mb-2">
-                        <EntryCard
-                          entry={entry}
-                          category={categories.find((c) => c.id === entry.categoryId)}
-                          onDelete={deleteEntry}
-                          onMarkAnswered={markPrayerAnswered}
-                        />
-                      </motion.div>
+                      <EntryCard
+                        key={entry.id}
+                        entry={entry}
+                        category={categories.find((c) => c.id === entry.categoryId)}
+                        onDelete={deleteEntry}
+                        onMarkAnswered={markPrayerAnswered}
+                      />
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground font-body">
+                    <p className="text-sm text-muted-foreground font-body py-6 text-center">
                       이 날의 기록이 없습니다
                     </p>
                   )}
@@ -184,31 +186,49 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero font-body" style={{ background: 'var(--gradient-warm)' }}>
+    <div className="min-h-screen font-body" style={{ background: 'var(--gradient-warm)' }}>
       {/* Header */}
-      <header className="sticky top-0 z-30 backdrop-blur-lg py-4 px-4" style={{ backgroundColor: 'hsl(var(--background) / 0.8)' }}>
+      <header
+        className="sticky top-0 z-30 pt-3 pb-3 px-4"
+        style={{
+          backgroundColor: 'hsl(var(--background) / 0.85)',
+          backdropFilter: 'blur(16px) saturate(1.5)',
+          WebkitBackdropFilter: 'blur(16px) saturate(1.5)',
+        }}
+      >
         <div className="max-w-lg mx-auto">
-          <motion.h1
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="font-display text-2xl font-medium text-foreground mb-4"
-          >
-            Thanks.
-          </motion.h1>
+          {/* Top row */}
+          <div className="flex items-baseline justify-between mb-3">
+            <motion.h1
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="font-display text-[22px] font-medium text-foreground"
+            >
+              Thanks.
+            </motion.h1>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="text-[12px] font-body text-muted-foreground/70"
+            >
+              {greeting} ✦
+            </motion.span>
+          </div>
           <ViewSelector view={view} onChange={setView} />
         </div>
       </header>
 
       {/* Content */}
-      <main className="px-4 pb-28 pt-2">
+      <main className="px-4 pb-28 pt-4">
         <div className="max-w-lg mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={view}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
             >
               {renderView()}
             </motion.div>
@@ -217,20 +237,27 @@ const Index = () => {
       </main>
 
       {/* FAB */}
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.3 }}
-        onClick={() => {
-          setSelectedDay(null);
-          setShowAddEntry(true);
-        }}
-        className="fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full flex items-center justify-center shadow-float transition-transform hover:scale-105 active:scale-95"
-        style={{ backgroundColor: 'hsl(var(--primary))' }}
-        aria-label="새 기록 추가"
-      >
-        <Plus size={26} className="text-primary-foreground" />
-      </motion.button>
+      <div className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
+        <div className="max-w-lg mx-auto flex justify-end p-5">
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 22, delay: 0.4 }}
+            onClick={() => {
+              setSelectedDay(null);
+              setShowAddEntry(true);
+            }}
+            className="pointer-events-auto w-14 h-14 rounded-2xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+            style={{
+              backgroundColor: 'hsl(var(--primary))',
+              boxShadow: 'var(--shadow-float)',
+            }}
+            aria-label="새 기록 추가"
+          >
+            <Plus size={24} className="text-primary-foreground" strokeWidth={2.5} />
+          </motion.button>
+        </div>
+      </div>
 
       {/* Modals */}
       <AddEntryModal
