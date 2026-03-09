@@ -2,10 +2,10 @@ import { useState, useCallback } from 'react';
 import { Category, DEFAULT_CATEGORIES } from '@/types';
 import {
   loadCategories,
-  addCategory as storageAdd,
-  deleteCategory as storageDelete,
+  createCategory,
+  updateCategory,
+  deleteCategory,
   saveCategories,
-  generateId,
 } from '@/lib/storage';
 
 const PRESET_COLORS = [
@@ -30,23 +30,30 @@ export function useCategories() {
 
   const addCategory = useCallback((name: string, emoji: string, color?: string) => {
     const customCats = loadCategories().filter((c) => !c.isDefault);
-    const cat: Category = {
-      id: generateId(),
+    const cat = createCategory({
       name,
       emoji,
       color: color ?? PRESET_COLORS[customCats.length % PRESET_COLORS.length],
-      isDefault: false,
-    };
-    storageAdd(cat);
+    });
     setCategories(loadCategories());
     return cat;
   }, []);
 
-  const deleteCategory = useCallback((id: string) => {
-    const cats = loadCategories().find((c) => c.id === id);
-    if (cats?.isDefault) return; // cannot delete defaults
-    storageDelete(id);
+  const editCategory = useCallback((id: string, patch: { name?: string; emoji?: string; color?: string }) => {
+    const category = loadCategories().find((c) => c.id === id);
+    if (!category || category.isDefault) return null; // Cannot edit default categories
+    
+    updateCategory(id, patch);
     setCategories(loadCategories());
+  }, []);
+
+  const removeCategory = useCallback((id: string) => {
+    const category = loadCategories().find((c) => c.id === id);
+    if (!category || category.isDefault) return false; // Cannot delete default categories
+    
+    deleteCategory(id);
+    setCategories(loadCategories());
+    return true;
   }, []);
 
   const resetToDefaults = useCallback(() => {
@@ -57,7 +64,8 @@ export function useCategories() {
   return {
     categories,
     addCategory,
-    deleteCategory,
+    editCategory,
+    deleteCategory: removeCategory,
     resetToDefaults,
     refresh,
     PRESET_COLORS,

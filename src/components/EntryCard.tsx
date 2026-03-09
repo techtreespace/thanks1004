@@ -1,15 +1,14 @@
 import { motion } from 'framer-motion';
 import { Trash2, CheckCircle2, Clock } from 'lucide-react';
-import { Entry, Category } from '@/types';
+import { Entry, Category, DEFAULT_CATEGORY_IDS } from '@/types';
 import { CategoryBadge } from './CategoryBadge';
-import { diffDays, todayStr } from '@/lib/storage';
 
 interface EntryCardProps {
   entry: Entry;
   category: Category | undefined;
   onDelete: (id: string) => void;
   onMarkAnswered?: (id: string) => void;
-  isCarried?: boolean; // faded prayer from previous day
+  isCarried?: boolean;
   showDate?: boolean;
 }
 
@@ -21,10 +20,7 @@ export function EntryCard({
   isCarried = false,
   showDate = false,
 }: EntryCardProps) {
-  const isPrayer = category?.id === 'prayer';
-  const daysPassed = entry.answeredAt
-    ? diffDays(entry.date, entry.answeredAt.split('T')[0])
-    : null;
+  const isPrayer = category?.id === DEFAULT_CATEGORY_IDS.PRAYER;
 
   const timeStr = new Date(entry.createdAt).toLocaleTimeString('ko-KR', {
     hour: '2-digit',
@@ -79,9 +75,9 @@ export function EntryCard({
         </div>
 
         {/* Photo */}
-        {entry.photo && (
+        {entry.imageUrl && (
           <div className="mb-3 rounded-lg overflow-hidden">
-            <img src={entry.photo} alt="기록 사진" className="w-full max-h-52 object-cover" />
+            <img src={entry.imageUrl} alt="기록 사진" className="w-full max-h-52 object-cover" />
           </div>
         )}
 
@@ -91,11 +87,11 @@ export function EntryCard({
         </p>
 
         {/* Prayer answered info */}
-        {isPrayer && entry.isAnswered && daysPassed !== null && (
+        {isPrayer && entry.isAnswered && entry.answerDays !== undefined && (
           <div className="mt-2.5 flex items-center gap-1.5 text-xs font-body"
             style={{ color: 'hsl(142 55% 38%)' }}>
             <CheckCircle2 size={12} />
-            <span>{daysPassed === 0 ? '같은 날 응답' : `${daysPassed}일 만에 응답됨`}</span>
+            <span>{entry.answerDays === 0 ? '같은 날 응답' : `${entry.answerDays}일 만에 응답됨`}</span>
           </div>
         )}
 
@@ -103,7 +99,7 @@ export function EntryCard({
         <div className="mt-3 flex items-center justify-between">
           <span className="text-xs text-muted-foreground font-body">
             {showDate
-              ? `${entry.date.slice(5).replace('-', '/')} ${timeStr}`
+              ? `${entry.recordDate.slice(5).replace('-', '/')} ${timeStr}`
               : timeStr}
           </span>
           {/* Mark as answered button */}

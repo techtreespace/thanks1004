@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Entry, Category } from '@/types';
-import { getWeekDates, todayStr, addDays, formatDate } from '@/lib/storage';
+import { Entry, Category, DEFAULT_CATEGORY_IDS } from '@/types';
+import { getWeekDates, todayStr, addDays } from '@/lib/storage';
 import { DayColumn } from './DayColumn';
 
 interface WeeklyViewProps {
@@ -26,8 +26,8 @@ export function WeeklyView({ entries, categories, onDelete, onMarkAnswered }: We
   const entriesByDate = useMemo(() => {
     const m: Record<string, Entry[]> = {};
     entries.forEach((e) => {
-      if (!m[e.date]) m[e.date] = [];
-      m[e.date].push(e);
+      if (!m[e.recordDate]) m[e.recordDate] = [];
+      m[e.recordDate].push(e);
     });
     return m;
   }, [entries]);
@@ -36,9 +36,10 @@ export function WeeklyView({ entries, categories, onDelete, onMarkAnswered }: We
   const getCarried = (dateStr: string) => {
     return entries.filter(
       (e) =>
-        e.categoryId === 'prayer' &&
+        e.categoryId === DEFAULT_CATEGORY_IDS.PRAYER &&
         !e.isAnswered &&
-        e.date < dateStr
+        e.carryOverVisible &&
+        e.recordDate < dateStr
     );
   };
 

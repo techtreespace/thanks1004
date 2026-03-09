@@ -2,12 +2,19 @@ import { useState, useCallback } from 'react';
 import { Entry } from '@/types';
 import {
   loadEntries,
-  addEntry as storageAdd,
-  updateEntry as storageUpdate,
-  deleteEntry as storageDelete,
-  generateId,
+  createEntry,
+  updateEntry,
+  deleteEntry,
   todayStr,
+  diffDays,
 } from '@/lib/storage';
+
+export interface AddEntryData {
+  categoryId: string;
+  content: string;
+  imageUrl?: string;
+  recordDate?: string;
+}
 
 export function useEntries() {
   const [entries, setEntries] = useState<Entry[]>(() => loadEntries());
@@ -16,38 +23,55 @@ export function useEntries() {
     setEntries(loadEntries());
   }, []);
 
-  const addEntry = useCallback(
-    (data: Omit<Entry, 'id' | 'createdAt' | 'date'> & { date?: string }) => {
-      const now = new Date().toISOString();
-      const entry: Entry = {
-        ...data,
-        id: generateId(),
-        createdAt: now,
-        date: data.date ?? todayStr(),
-      };
-      storageAdd(entry);
-      setEntries(loadEntries());
-      return entry;
-    },
-    []
-  );
+  const addEntry = useCallback((data: AddEntryData) => {
+    const entry = createEntry({
+      categoryId: data.categoryId,
+      content: data.content,
+      imageUrl: data.imageUrl,
+      recordDate: data.recordDate ?? todayStr(),
+      isAnswered: false,
+      carryOverVisible: true,
+    });
+    setEntries(loadEntries());
+    return entry;
+  }, []);
 
-  const updateEntry = useCallback((id: string, patch: Partial<Entry>) => {
-    storageUpdate(id, patch);
+  const editEntry = useCallback((id: string, patch: Partial<Entry>) => {
+    updateEntry(id, patch);
     setEntries(loadEntries());
   }, []);
 
-  const deleteEntry = useCallback((id: string) => {
-    storageDelete(id);
+  const removeEntry = useCallback((id: string) => {
+    deleteEntry(id);
     setEntries(loadEntries());
   }, []);
 
-  const markPrayerAnswered = useCallback(
-    (id: string) => {
-      updateEntry(id, { isAnswered: true, answeredAt: new Date().toISOString() });
-    },
-    [updateEntry]
-  );
+  const markPrayerAnswered = useCallback((id: string) => {
+    const now = new Date().toISOString();
+    const entry = entries.find((e) => e.id === id);
+    if (!entry) return;
+    
+    const answerDays = diffDays(entry.recordDate, now.split('T')[0]);
+    updateEntry(id, { 
+      isAnswered: true, 
+      answeredAt: now,
+      answerDays,
+    });
+    setEntries(loadEntries());
+  }, [entries]);
 
-  return { entries, addEntry, updateEntry, deleteEntry, markPrayerAnswered, refresh };
+  const hideCarryOver = useCallback((id: string) => {
+    updateEntry(id, { carryOverVisible: false });
+    setEntries(loadEntries());
+  }, []);
+
+  return { 
+    entries, 
+    addEntry, 
+    updateEntry: editEntry, 
+    deleteEntry: removeEntry, 
+    markPrayerAnswered,
+    hideCarryOver,
+    refresh,
+  };
 }

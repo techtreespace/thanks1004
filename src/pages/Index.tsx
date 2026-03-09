@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { ViewMode } from '@/types';
-import { useEntries } from '@/hooks/useEntries';
+import { ViewMode, DEFAULT_CATEGORY_IDS } from '@/types';
+import { useEntries, AddEntryData } from '@/hooks/useEntries';
 import { useCategories } from '@/hooks/useCategories';
 import { todayStr, addDays } from '@/lib/storage';
 
@@ -31,8 +31,8 @@ const Index = () => {
   const entriesByDate = useMemo(() => {
     const m: Record<string, typeof entries> = {};
     entries.forEach((e) => {
-      if (!m[e.date]) m[e.date] = [];
-      m[e.date].push(e);
+      if (!m[e.recordDate]) m[e.recordDate] = [];
+      m[e.recordDate].push(e);
     });
     return m;
   }, [entries]);
@@ -41,13 +41,20 @@ const Index = () => {
   const carriedPrayers = useMemo(
     () =>
       entries.filter(
-        (e) => e.categoryId === 'prayer' && !e.isAnswered && e.date < today
+        (e) =>
+          e.categoryId === DEFAULT_CATEGORY_IDS.PRAYER &&
+          !e.isAnswered &&
+          e.carryOverVisible &&
+          e.recordDate < today
       ),
     [entries, today]
   );
 
-  const handleAddEntry = (data: Parameters<typeof addEntry>[0]) => {
-    addEntry({ ...data, date: selectedDay ?? data.date ?? today });
+  const handleAddEntry = (data: AddEntryData) => {
+    addEntry({
+      ...data,
+      recordDate: selectedDay ?? data.recordDate ?? today,
+    });
     setSelectedDay(null);
   };
 
