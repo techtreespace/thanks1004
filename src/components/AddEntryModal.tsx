@@ -3,17 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Camera, ChevronDown, Plus } from 'lucide-react';
 import { Category } from '@/types';
 import { CategoryBadge } from './CategoryBadge';
+import { AddEntryData } from '@/hooks/useEntries';
 
 interface AddEntryModalProps {
   open: boolean;
   onClose: () => void;
   categories: Category[];
-  onSubmit: (data: {
-    categoryId: string;
-    content: string;
-    photo?: string;
-    date: string;
-  }) => void;
+  onSubmit: (data: AddEntryData) => void;
   defaultDate: string;
   onAddCategory: () => void;
 }
@@ -28,7 +24,7 @@ export function AddEntryModal({
 }: AddEntryModalProps) {
   const [selectedCategory, setSelectedCategory] = useState(categories[0]?.id ?? '');
   const [content, setContent] = useState('');
-  const [photo, setPhoto] = useState<string | undefined>();
+  const [imageUrl, setImageUrl] = useState<string | undefined>();
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -38,7 +34,7 @@ export function AddEntryModal({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => setPhoto(ev.target?.result as string);
+    reader.onload = (ev) => setImageUrl(ev.target?.result as string);
     reader.readAsDataURL(file);
   };
 
@@ -47,18 +43,18 @@ export function AddEntryModal({
     onSubmit({
       categoryId: selectedCategory,
       content: content.trim(),
-      photo,
-      date: defaultDate,
+      imageUrl,
+      recordDate: defaultDate,
     });
     setContent('');
-    setPhoto(undefined);
+    setImageUrl(undefined);
     setShowCategoryPicker(false);
     onClose();
   };
 
   const handleClose = () => {
     setContent('');
-    setPhoto(undefined);
+    setImageUrl(undefined);
     setShowCategoryPicker(false);
     onClose();
   };
@@ -164,11 +160,11 @@ export function AddEntryModal({
               />
 
               {/* Photo preview */}
-              {photo && (
+              {imageUrl && (
                 <div className="relative mt-2 mb-3">
-                  <img src={photo} alt="첨부 사진" className="w-full max-h-40 object-cover rounded-xl" />
+                  <img src={imageUrl} alt="첨부 사진" className="w-full max-h-40 object-cover rounded-xl" />
                   <button
-                    onClick={() => setPhoto(undefined)}
+                    onClick={() => setImageUrl(undefined)}
                     className="absolute top-2 right-2 p-1 rounded-full bg-foreground/60"
                   >
                     <X size={12} className="text-primary-foreground" />
