@@ -1,25 +1,27 @@
 import { ViewMode } from '@/types';
 import { motion } from 'framer-motion';
-import { CalendarDays, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { useI18n, TranslationKey } from '@/lib/i18n';
 
 interface ViewSelectorProps {
   view: ViewMode;
   onChange: (view: ViewMode) => void;
 }
 
-const VIEWS: { id: ViewMode; label: string; icon?: React.ReactNode }[] = [
-  { id: 'today', label: '오늘' },
-  { id: 'yesterday-today', label: '어제·오늘' },
-  { id: 'today-tomorrow', label: '오늘·내일' },
-  { id: 'weekly', label: '주간' },
-  { id: 'monthly', label: '월간' },
-  { id: 'stats', label: '통계' },
+const VIEW_KEYS: { id: ViewMode; key: TranslationKey }[] = [
+  { id: 'today', key: 'nav.today' },
+  { id: 'yesterday-today', key: 'nav.yesterdayToday' },
+  { id: 'today-tomorrow', key: 'nav.todayTomorrow' },
+  { id: 'weekly', key: 'nav.weekly' },
+  { id: 'monthly', key: 'nav.monthly' },
+  { id: 'stats', key: 'nav.stats' },
 ];
 
 export function ViewSelector({ view, onChange }: ViewSelectorProps) {
+  const { t } = useI18n();
+
   return (
     <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-none -mx-1 px-1">
-      {VIEWS.map((v) => {
+      {VIEW_KEYS.map((v) => {
         const active = view === v.id;
         return (
           <button
@@ -39,7 +41,7 @@ export function ViewSelector({ view, onChange }: ViewSelectorProps) {
               className="relative z-10 transition-colors"
               style={{ color: active ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))' }}
             >
-              {v.label}
+              {t(v.key)}
             </span>
           </button>
         );

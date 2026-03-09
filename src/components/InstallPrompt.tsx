@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Smartphone } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -8,20 +9,18 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function InstallPrompt() {
+  const { t } = useI18n();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) return;
 
-    // Check if iOS
     const ios = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
     setIsIOS(ios);
 
-    // Check if dismissed recently
     const dismissedAt = localStorage.getItem('thanks_install_dismissed');
     if (dismissedAt && Date.now() - Number(dismissedAt) < 3 * 24 * 60 * 60 * 1000) {
       setDismissed(true);
@@ -55,7 +54,6 @@ export function InstallPrompt() {
     localStorage.setItem('thanks_install_dismissed', String(Date.now()));
   };
 
-  // Don't show if already installed, dismissed, or no prompt available (and not iOS)
   const shouldShow = !dismissed && (deferredPrompt || isIOS);
   if (!shouldShow) return null;
 
@@ -85,8 +83,8 @@ export function InstallPrompt() {
                 <Smartphone size={20} style={{ color: 'hsl(var(--primary))' }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-body font-medium text-foreground">홈 화면에 추가</p>
-                <p className="text-xs font-body text-muted-foreground mt-0.5">앱처럼 빠르게 열 수 있어요</p>
+                <p className="text-sm font-body font-medium text-foreground">{t('install.addToHome')}</p>
+                <p className="text-xs font-body text-muted-foreground mt-0.5">{t('install.openQuickly')}</p>
               </div>
               <button
                 onClick={handleInstall}
@@ -96,7 +94,7 @@ export function InstallPrompt() {
                   color: 'hsl(var(--primary-foreground))',
                 }}
               >
-                설치
+                {t('install.button')}
               </button>
               <button
                 onClick={handleDismiss}
@@ -128,19 +126,19 @@ export function InstallPrompt() {
               className="fixed bottom-8 left-4 right-4 z-50 max-w-sm mx-auto rounded-2xl p-6"
               style={{ backgroundColor: 'hsl(var(--card))', boxShadow: 'var(--shadow-float)' }}
             >
-              <h3 className="font-display text-lg text-foreground mb-4">iOS에서 설치하기</h3>
+              <h3 className="font-display text-lg text-foreground mb-4">{t('install.iosTitle')}</h3>
               <ol className="space-y-3 text-sm font-body text-foreground/80">
                 <li className="flex gap-2">
                   <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))' }}>1</span>
-                  <span>Safari 하단의 <strong>공유 버튼</strong> (⬆) 을 탭하세요</span>
+                  <span dangerouslySetInnerHTML={{ __html: t('install.iosStep1') }} />
                 </li>
                 <li className="flex gap-2">
                   <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))' }}>2</span>
-                  <span>스크롤하여 <strong>"홈 화면에 추가"</strong> 를 탭하세요</span>
+                  <span dangerouslySetInnerHTML={{ __html: t('install.iosStep2') }} />
                 </li>
                 <li className="flex gap-2">
                   <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))' }}>3</span>
-                  <span><strong>"추가"</strong> 를 탭하면 완료!</span>
+                  <span dangerouslySetInnerHTML={{ __html: t('install.iosStep3') }} />
                 </li>
               </ol>
               <button
@@ -151,7 +149,7 @@ export function InstallPrompt() {
                 className="w-full mt-5 py-2.5 rounded-xl text-sm font-body font-medium"
                 style={{ backgroundColor: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))' }}
               >
-                알겠어요
+                {t('install.iosOk')}
               </button>
             </motion.div>
           </>

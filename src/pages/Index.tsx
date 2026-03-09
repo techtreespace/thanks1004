@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { ViewMode, DEFAULT_CATEGORY_IDS } from '@/types';
 import { useEntries, AddEntryData } from '@/hooks/useEntries';
 import { useCategories } from '@/hooks/useCategories';
-import { todayStr, addDays, formatKoreanDate } from '@/lib/storage';
+import { todayStr, addDays } from '@/lib/storage';
+import { useI18n } from '@/lib/i18n';
 
 import { ViewSelector } from '@/components/ViewSelector';
 import { DayColumn } from '@/components/DayColumn';
@@ -21,6 +22,7 @@ const Index = () => {
   const { entries, addEntry, deleteEntry, markPrayerAnswered } = useEntries();
   const { categories, addCategory, PRESET_COLORS, PRESET_EMOJIS } = useCategories();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const [view, setView] = useState<ViewMode>('today');
   const [showAddEntry, setShowAddEntry] = useState(false);
@@ -65,10 +67,10 @@ const Index = () => {
     setShowAddEntry(true);
   };
 
-  // Today's greeting
+  // Greeting
   const hour = new Date().getHours();
   const greeting =
-    hour < 6 ? '고요한 밤' : hour < 12 ? '좋은 아침' : hour < 18 ? '따뜻한 오후' : '편안한 저녁';
+    hour < 6 ? t('greeting.night') : hour < 12 ? t('greeting.morning') : hour < 18 ? t('greeting.afternoon') : t('greeting.evening');
 
   const renderView = () => {
     switch (view) {
@@ -172,7 +174,6 @@ const Index = () => {
         }}
       >
         <div className="max-w-lg mx-auto">
-          {/* Top row */}
           <div className="flex items-baseline justify-between mb-3">
             <motion.h1
               initial={{ opacity: 0, y: -6 }}
@@ -193,7 +194,7 @@ const Index = () => {
               <button
                 onClick={() => navigate('/settings')}
                 className="p-1.5 rounded-lg active:scale-95 transition-transform"
-                aria-label="설정"
+                aria-label={t('settings.ariaLabel')}
               >
                 <Settings size={17} className="text-muted-foreground/60" />
               </button>
@@ -236,7 +237,7 @@ const Index = () => {
               backgroundColor: 'hsl(var(--primary))',
               boxShadow: 'var(--shadow-float)',
             }}
-            aria-label="새 기록 추가"
+            aria-label={t('fab.add')}
           >
             <Plus size={24} className="text-primary-foreground" strokeWidth={2.5} />
           </motion.button>

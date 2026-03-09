@@ -3,6 +3,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Trash2, CheckCircle2, Clock, Heart } from 'lucide-react';
 import { Entry, Category, DEFAULT_CATEGORY_IDS } from '@/types';
 import { CategoryBadge } from './CategoryBadge';
+import { useI18n } from '@/lib/i18n';
 
 interface EntryCardProps {
   entry: Entry;
@@ -21,11 +22,12 @@ export function EntryCard({
   isCarried = false,
   showDate = false,
 }: EntryCardProps) {
+  const { t, dateLocale } = useI18n();
   const isPrayer = category?.id === DEFAULT_CATEGORY_IDS.PRAYER;
   const [swiped, setSwiped] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const timeStr = new Date(entry.createdAt).toLocaleTimeString('ko-KR', {
+  const timeStr = new Date(entry.createdAt).toLocaleTimeString(dateLocale, {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -63,7 +65,7 @@ export function EntryCard({
       >
         <button onClick={handleDelete} className="flex items-center gap-1.5 text-sm font-body font-medium" style={{ color: 'hsl(0 0% 100%)' }}>
           <Trash2 size={16} />
-          {confirmDelete ? '확인' : '삭제'}
+          {confirmDelete ? t('entry.confirm') : t('entry.delete')}
         </button>
       </div>
 
@@ -104,7 +106,7 @@ export function EntryCard({
                   }}
                 >
                   <CheckCircle2 size={10} />
-                  응답됨
+                  {t('entry.answered')}
                 </span>
               )}
               {isPrayer && !entry.isAnswered && isCarried && (
@@ -117,7 +119,7 @@ export function EntryCard({
                   }}
                 >
                   <Heart size={9} />
-                  계속 기도 중
+                  {t('entry.stillPraying')}
                 </span>
               )}
             </div>
@@ -133,7 +135,7 @@ export function EntryCard({
             <div className="mb-2.5 -mx-1 rounded-xl overflow-hidden">
               <img
                 src={entry.imageUrl}
-                alt="기록 사진"
+                alt={t('entry.photo')}
                 className="w-full max-h-48 object-cover"
                 loading="lazy"
               />
@@ -153,7 +155,9 @@ export function EntryCard({
             >
               <CheckCircle2 size={11} />
               <span>
-                {entry.answerDays === 0 ? '같은 날 응답됨' : `${entry.answerDays}일 만에 응답됨`}
+                {entry.answerDays === 0
+                  ? t('entry.answeredSameDay')
+                  : t('entry.answeredInDays', { n: entry.answerDays })}
               </span>
             </div>
           )}
@@ -170,7 +174,7 @@ export function EntryCard({
                   border: '1px solid hsl(220 60% 62% / 0.2)',
                 }}
               >
-                🙏 응답 표시
+                {t('entry.markAnswered')}
               </button>
             </div>
           )}
@@ -187,7 +191,7 @@ export function EntryCard({
                   border: '1px solid hsl(152 50% 45% / 0.18)',
                 }}
               >
-                ✨ 응답됨으로 표시
+                {t('entry.markAsAnswered')}
               </button>
             </div>
           )}

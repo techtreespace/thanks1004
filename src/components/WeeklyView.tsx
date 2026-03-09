@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Entry, Category, DEFAULT_CATEGORY_IDS } from '@/types';
 import { getWeekDates, todayStr, addDays } from '@/lib/storage';
 import { DayColumn } from './DayColumn';
+import { useI18n } from '@/lib/i18n';
 
 interface WeeklyViewProps {
   entries: Entry[];
@@ -12,6 +13,7 @@ interface WeeklyViewProps {
 }
 
 export function WeeklyView({ entries, categories, onDelete, onMarkAnswered }: WeeklyViewProps) {
+  const { locale } = useI18n();
   const today = todayStr();
   const [weekStart, setWeekStart] = useState(() => {
     const dates = getWeekDates(today);
@@ -32,7 +34,6 @@ export function WeeklyView({ entries, categories, onDelete, onMarkAnswered }: We
     return m;
   }, [entries]);
 
-  // Unanswered prayers carry forward
   const getCarried = (dateStr: string) => {
     return entries.filter(
       (e) =>
@@ -46,16 +47,17 @@ export function WeeklyView({ entries, categories, onDelete, onMarkAnswered }: We
   const start = new Date(dates[0]);
   const end = new Date(dates[6]);
 
+  const rangeLabel = locale === 'en'
+    ? `${start.getMonth() + 1}/${start.getDate()} – ${end.getMonth() + 1}/${end.getDate()}`
+    : `${start.getMonth() + 1}월 ${start.getDate()}일 – ${end.getMonth() + 1}월 ${end.getDate()}일`;
+
   return (
     <div>
-      {/* Week nav */}
       <div className="flex items-center justify-between mb-5">
         <button onClick={prevWeek} className="p-2 rounded-lg hover:bg-muted transition-colors">
           <ChevronLeft size={18} className="text-muted-foreground" />
         </button>
-        <p className="font-body text-sm text-muted-foreground">
-          {start.getMonth() + 1}월 {start.getDate()}일 – {end.getMonth() + 1}월 {end.getDate()}일
-        </p>
+        <p className="font-body text-sm text-muted-foreground">{rangeLabel}</p>
         <button onClick={nextWeek} className="p-2 rounded-lg hover:bg-muted transition-colors">
           <ChevronRight size={18} className="text-muted-foreground" />
         </button>
