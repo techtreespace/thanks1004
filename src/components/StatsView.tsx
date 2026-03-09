@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Entry, Category } from '@/types';
-import { diffDays, todayStr } from '@/lib/storage';
+import { Entry, Category, DEFAULT_CATEGORY_IDS } from '@/types';
 
 interface StatsViewProps {
   entries: Entry[];
@@ -20,13 +19,13 @@ export function StatsView({ entries, categories }: StatsViewProps) {
       }
     });
 
-    const prayers = entries.filter((e) => e.categoryId === 'prayer');
+    const prayers = entries.filter((e) => e.categoryId === DEFAULT_CATEGORY_IDS.PRAYER);
     const answered = prayers.filter((e) => e.isAnswered);
     const unanswered = prayers.filter((e) => !e.isAnswered);
 
     const durations = answered
-      .filter((e) => e.answeredAt)
-      .map((e) => diffDays(e.date, e.answeredAt!.split('T')[0]));
+      .filter((e) => e.answerDays !== undefined)
+      .map((e) => e.answerDays!);
     const avgDays = durations.length
       ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
       : null;

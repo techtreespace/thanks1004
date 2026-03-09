@@ -34,8 +34,8 @@ export function MonthlyCalendar({ entries, categories, onDayClick }: MonthlyCale
   const entryMap = useMemo(() => {
     const m: Record<string, Entry[]> = {};
     entries.forEach((e) => {
-      if (!m[e.date]) m[e.date] = [];
-      m[e.date].push(e);
+      if (!m[e.recordDate]) m[e.recordDate] = [];
+      m[e.recordDate].push(e);
     });
     return m;
   }, [entries]);
