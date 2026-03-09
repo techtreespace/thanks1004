@@ -20,6 +20,7 @@ import { InstallPrompt } from '@/components/InstallPrompt';
 const Index = () => {
   const { entries, addEntry, deleteEntry, markPrayerAnswered } = useEntries();
   const { categories, addCategory, PRESET_COLORS, PRESET_EMOJIS } = useCategories();
+  const navigate = useNavigate();
 
   const [view, setView] = useState<ViewMode>('today');
   const [showAddEntry, setShowAddEntry] = useState(false);
