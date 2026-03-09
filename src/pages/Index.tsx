@@ -209,14 +209,23 @@ const Index = () => {
             >
               Thanks.
             </motion.h1>
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15 }}
-              className="text-[12px] font-body text-muted-foreground/70"
-            >
-              {greeting} ✦
-            </motion.span>
+            <div className="flex items-center gap-2">
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                className="text-[12px] font-body text-muted-foreground/70"
+              >
+                {greeting} ✦
+              </motion.span>
+              <button
+                onClick={() => navigate('/settings')}
+                className="p-1.5 rounded-lg active:scale-95 transition-transform"
+                aria-label="설정"
+              >
+                <Settings size={17} className="text-muted-foreground/60" />
+              </button>
+            </div>
           </div>
           <ViewSelector view={view} onChange={setView} />
         </div>
