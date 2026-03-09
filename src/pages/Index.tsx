@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ViewMode, DEFAULT_CATEGORY_IDS } from '@/types';
 import { useEntries, AddEntryData } from '@/hooks/useEntries';
 import { useCategories } from '@/hooks/useCategories';
@@ -19,6 +20,7 @@ import { InstallPrompt } from '@/components/InstallPrompt';
 const Index = () => {
   const { entries, addEntry, deleteEntry, markPrayerAnswered } = useEntries();
   const { categories, addCategory, PRESET_COLORS, PRESET_EMOJIS } = useCategories();
+  const navigate = useNavigate();
 
   const [view, setView] = useState<ViewMode>('today');
   const [showAddEntry, setShowAddEntry] = useState(false);
@@ -207,14 +209,23 @@ const Index = () => {
             >
               Thanks.
             </motion.h1>
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15 }}
-              className="text-[12px] font-body text-muted-foreground/70"
-            >
-              {greeting} ✦
-            </motion.span>
+            <div className="flex items-center gap-2">
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                className="text-[12px] font-body text-muted-foreground/70"
+              >
+                {greeting} ✦
+              </motion.span>
+              <button
+                onClick={() => navigate('/settings')}
+                className="p-1.5 rounded-lg active:scale-95 transition-transform"
+                aria-label="설정"
+              >
+                <Settings size={17} className="text-muted-foreground/60" />
+              </button>
+            </div>
           </div>
           <ViewSelector view={view} onChange={setView} />
         </div>
